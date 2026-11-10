@@ -9,21 +9,35 @@ const $=s=>document.querySelector(s);
 let cur=convs.all()[0]||convs.create(),ctrl=null,busyNow=false;
 const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const hl=c=>esc(c).replace(/(\/\/.*|#\s.*)|(&quot;.*?&quot;|'.*?')|\b(function|const|let|var|return|if|else|for|while|class|import|export|def|async|await|new|true|false|null)\b/g,(m,a,b)=>`<i class="${a?'c':b?'s':'k'}">${m}</i>`);
-const inline=t=>esc(t).replace(/^### (.*)$/gm,'<h4>$1</h4>').replace(/^#{1,2} (.*)$/gm,'<h3>$1</h3>').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/`([^`\n]+)`/g,'<code>$1</code>').replace(/^[-*] (.*)$/gm,'• $1').replace(/\[(.+?)\]\((https?:\/\/[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>').replace(/\n/g,'<br>');
+const inl=t=>esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/(^|[^*])\*([^*\n]+)\*/g,'$1<em>$2</em>').replace(/`([^`\n]+)`/g,'<code>$1</code>').replace(/\[(.+?)\]\((https?:\/\/[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+const LI=/^\s*([-*]|\d+[.)]) /;
+function blocks(t){const L=t.split('\n');let o='',i=0;
+ while(i<L.length){const l=L[i];let m;
+  if(!l.trim()){i++}
+  else if(m=l.match(/^(#{1,4}) (.*)/)){const h=m[1].length+1;o+=`<h${h}>${inl(m[2])}</h${h}>`;i++}
+  else if(LI.test(l)){const tag=/^\s*\d/.test(l)?'ol':'ul';o+=`<${tag}>`;while(i<L.length&&LI.test(L[i]))o+=`<li>${inl(L[i++].replace(LI,''))}</li>`;o+=`</${tag}>`}
+  else if(l[0]==='>'){const q=[];while(i<L.length&&L[i][0]==='>')q.push(L[i++].replace(/^>\s?/,''));o+=`<blockquote>${inl(q.join(' '))}</blockquote>`}
+  else if(l[0]==='|'&&/^[\s|:-]+$/.test(L[i+1]||'x')){const row=r=>r.trim().replace(/^\||\|$/g,'').split('|').map(c=>inl(c.trim()));const h=row(l);i+=2;let b='';while(i<L.length&&L[i][0]==='|')b+=`<tr>${row(L[i++]).map(c=>`<td>${c}</td>`).join('')}</tr>`;o+=`<div class="tw"><table><thead><tr>${h.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${b}</tbody></table></div>`}
+  else if(/^---+$/.test(l.trim())){o+='<hr>';i++}
+  else{const p=[];do p.push(inl(L[i++]));while(i<L.length&&L[i].trim()&&!/^(#{1,4} |>|---+$)/.test(L[i])&&!LI.test(L[i]));o+=`<p>${p.join('<br>')}</p>`}}
+ return o}
 function md(t){const p=t.split(/```(\w*)\n?([\s\S]*?)(?:```|$)/);let o='';
- for(let i=0;i<p.length;i+=3){o+=inline(p[i]);if(i+2<p.length)o+=`<div class="code"><div class="ch"><span>${esc(p[i+1]||'code')}</span><button data-a="cc">Copier</button></div><pre><code>${hl(p[i+2])}</code></pre></div>`}return o}
+ for(let i=0;i<p.length;i+=3){o+=blocks(p[i]);if(i+2<p.length)o+=`<div class="code"><div class="ch"><span>${esc(p[i+1]||'code')}</span><button data-a="cc">Copier</button></div><pre><code>${hl(p[i+2])}</code></pre></div>`}return o}
 const SUG=[['Expliquer',"Explique-moi la relativité comme si j'avais 12 ans"],['Coder',"Écris une fonction JavaScript qui trie un tableau d'objets par date"],['Rédiger',"Rédige un e-mail poli pour demander un report de rendez-vous"],['Analyser',"Compare les avantages du télétravail et du travail au bureau"]];
 const hero=s=>`<div class="hero"><i class="orb"></i><h1>Comment puis-je vous aider ?</h1>${s.mode!=='local'&&!remoteReady(s)?`<div class="setup"><p>Collez votre clé API Google pour connecter l'IA. Elle reste uniquement dans ce navigateur.</p><div><input id="k0" type="password" placeholder="Clé API" autocomplete="off"><button id="k1">Connecter</button></div></div>`:`<div class="sug">${SUG.map(([t,p])=>`<button data-p="${esc(p)}"><b>${t}</b><span>${esc(p)}</span></button>`).join('')}</div>`}</div>`;
+const bodyHtml=m=>(m.role==='user'?esc(m.content).replace(/\n/g,'<br>'):m.content?md(m.content):m.error?'':'<span class="dots"></span>')+(m.error?`<p class="err">${esc(m.error)}</p>`:'');
+let raf=0;
+const sched=()=>raf||(raf=requestAnimationFrame(()=>{raf=0;const b=$('#msgs .m:last-child .b');if(!b)return render();const el=$('#msgs'),near=el.scrollHeight-el.scrollTop-el.clientHeight<140;b.innerHTML=bodyHtml(cur.messages.at(-1));if(near)el.scrollTop=el.scrollHeight}));
 function render(){
- const s=settings.get();$('#title').textContent=cur.messages.length?cur.title:'';$('#badge').textContent=s.mode==='local'?'Local':s.model;
- $('#msgs').innerHTML=cur.messages.length?cur.messages.map((m,i)=>`<div class="m ${m.role}">${m.role==='user'?'':'<i class="av"></i>'}<div class="mc"><div class="b${busyNow&&i===cur.messages.length-1?' live':''}">${m.role==='user'?esc(m.content).replace(/\n/g,'<br>'):m.content?md(m.content):m.error?'':'<span class="dots"></span>'}${m.error?`<p class="err">${esc(m.error)}</p>`:''}</div><div class="a"><button data-a="copy" data-i="${i}">Copier</button>${m.role==='user'?`<button data-a="edit" data-i="${i}">Modifier</button>`:i===cur.messages.length-1&&!busyNow?`<button data-a="regen" data-i="${i}">Régénérer</button>`:''}</div></div></div>`).join(''):hero(s);
+ const s=settings.get();$('#title').textContent=cur.messages.length?cur.title:'';$('#badge').textContent=s.mode==='local'?'Local':s.model;$('#speed').value=s.speed;
+ $('#msgs').innerHTML=cur.messages.length?cur.messages.map((m,i)=>`<div class="m ${m.role}">${m.role==='user'?'':'<i class="av"></i>'}<div class="mc"><div class="b${busyNow&&i===cur.messages.length-1?' live':''}">${bodyHtml(m)}</div>${m.sources?.length?`<div class="src">${m.sources.map(x=>`<span>${esc(x)}</span>`).join('')}</div>`:''}<div class="a"><button data-a="copy" data-i="${i}">Copier</button>${m.role==='user'?`<button data-a="edit" data-i="${i}">Modifier</button>`:i===cur.messages.length-1&&!busyNow?`<button data-a="regen" data-i="${i}">Régénérer</button>`:''}</div></div></div>`).join(''):hero(s);
  $('#list').innerHTML=convs.all().map(c=>`<li class="${c.id===cur.id?'on':''}" data-id="${c.id}"><span>${esc(c.title)}</span><button data-a="ren">✎</button><button data-a="del">🗑</button></li>`).join('');
  $('#msgs').scrollTop=1e9}
 const busy=b=>{busyNow=b;$('#send').hidden=b;$('#stop').hidden=!b};
 async function generate(){
  cur.messages.push({role:'assistant',content:''});const m=cur.messages.at(-1);
  ctrl=new AbortController();busy(true);render();
- try{for await(const t of respond(cur.messages.slice(0,-1),{signal:ctrl.signal,onStatus:s=>$('#badge').textContent=s})){m.content+=t;render()}}
+ try{for await(const t of respond(cur.messages.slice(0,-1),{signal:ctrl.signal,onStatus:s=>$('#badge').textContent=s,onSources:s=>{m.sources=s}})){m.content+=t;sched()}}
  catch(e){if(!ctrl.signal.aborted)m.error=e.message}
  finally{busy(false);if(!m.content&&!m.error)cur.messages.pop();try{convs.update(cur)}catch(e){alert(e.message)}render()}}
 $('#form').onsubmit=e=>{e.preventDefault();if(busyNow)return;const v=$('#inp').value.trim();if(!v)return;$('#inp').value='';$('#inp').style.height='auto';
@@ -74,3 +88,4 @@ function memDlg(){
 $('#memBtn').onclick=memDlg;
 render();
 $('#inp').oninput=e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,160)+'px'};
+$('#speed').onchange=e=>settings.set({speed:e.target.value});render();

@@ -1,0 +1,30 @@
+[
+ {
+  "name": "Présentation de SMART AI",
+  "text": "SMART AI est un assistant IA qui tourne entièrement dans le navigateur et se publie sur GitHub Pages (site statique, sans serveur). Il propose trois modes : local (modèle WebLLM sur WebGPU, sans clé), connecté (API Google Gemini ou compatible OpenAI avec votre clé) et hybride (local pour le simple, API pour le complexe). Il offre une mémoire, une base de connaissances, des outils, plusieurs personnalités et l'historique des conversations."
+ },
+ {
+  "name": "Commandes et outils",
+  "text": "Écrivez « retiens que… » pour enregistrer un souvenir et « oublie… » pour le supprimer. « note : … » enregistre une note. Une expression comme 12*(3+4), 2^10 ou sqrt(144) est calculée localement par une calculatrice sécurisée, sans appel au modèle. « Cherche sur internet … » ne fonctionne que si un service de recherche JSON est configuré dans Réglages (URL contenant {q}); sinon une erreur explicite est affichée, rien n'est simulé."
+ },
+ {
+  "name": "Mémoire et confidentialité",
+  "text": "Les conversations, la mémoire, les notes et les réglages sont stockés dans le localStorage de votre navigateur, jamais sur un serveur de SMART AI. Rien n'est mémorisé sans demande explicite. Les informations sensibles (mots de passe, numéros de carte, clés) sont refusées. Le panneau Mémoire permet de supprimer chaque souvenir ou de tout effacer. Les messages sont envoyés au fournisseur choisi (par exemple Google) pour générer la réponse. La clé API est conservée dans le navigateur ; ne la publiez jamais dans le dépôt GitHub."
+ },
+ {
+  "name": "Réglages, modèles et vitesse",
+  "text": "Réglages permet de choisir le fournisseur (Google Gemini, Vertex AI express, OpenAI, OpenRouter, Groq ou proxy personnalisé), l'URL, la clé, le modèle et la personnalité. Le sélecteur de vitesse en haut de l'écran règle la réflexion des modèles Gemini 3 : Rapide (réflexion minimale, réponses les plus rapides), Équilibré (réglage par défaut du modèle) et Approfondi (raisonnement maximal, plus lent). Pour le mode local, le modèle se télécharge au premier message et nécessite un navigateur compatible WebGPU."
+ },
+ {
+  "name": "Base de connaissances",
+  "text": "La base de connaissances combine le fichier base.json, fourni avec le projet et modifiable (liste de documents avec un nom et un texte), et les documents importés depuis le panneau Mémoire (txt, md, csv, json). Pour chaque question, les extraits les plus pertinents sont recherchés (classement BM25) et fournis au modèle ; les sources utilisées s'affichent sous la réponse. Les documents importés sont limités par le stockage du navigateur (environ 5 Mo au total)."
+ },
+ {
+  "name": "Dépannage",
+  "text": "Erreur 401 ou 403 : la clé est refusée ; vérifiez-la ou essayez le fournisseur Vertex AI express. Erreur 404 : le modèle n'existe plus, changez-le dans Réglages (les identifiants de modèles Google évoluent). Erreur 429 : limite de requêtes atteinte, attendez un moment. « Failed to fetch » : problème réseau ou restriction de la clé sur le domaine. « WebGPU indisponible » : utilisez le mode connecté."
+ },
+ {
+  "name": "Limites",
+  "text": "Un modèle local léger est bien moins capable qu'un grand modèle distant. Les modèles peuvent se tromper : vérifiez les informations importantes. SMART AI n'entraîne pas de modèle : la mémoire et la base de connaissances sont du texte ajouté au contexte de chaque demande."
+ }
+]

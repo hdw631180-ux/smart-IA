@@ -31,3 +31,6 @@ Ouvrez `tests.html` via un serveur local : chaque ligne affiche OK ou ECHEC.
 
 ## Connexion à Google Gemini (par défaut)
 Au premier lancement, collez votre clé API (AI Studio ou Vertex AI express) dans la carte « Connecter » : elle est conservée dans le `localStorage` de votre navigateur uniquement. Modèle par défaut : `gemini-3.8-flash` (modifiable dans Réglages ; les identifiants de modèles Google changent régulièrement). Si la clé est refusée (401/403) avec « Google Gemini », essayez « Google Vertex AI (express) ». Ne commitez jamais la clé dans le dépôt ; dans la console Google, limitez-la à votre domaine `*.github.io`.
+
+## Base de connaissances et vitesse
+`base.json` (liste de `{name,text}`) est la base intégrée : remplacez-la par vos propres contenus. Les documents importés dans Mémoire s'y ajoutent. La recherche BM25 injecte les extraits pertinents et affiche leurs sources. Le sélecteur « Rapide / Équilibré / Approfondi » règle `thinkingLevel` des modèles Gemini 3 (Rapide = `low`).

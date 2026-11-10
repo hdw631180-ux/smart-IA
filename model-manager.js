@@ -27,10 +27,10 @@ export async function* stream(messages,{mode,onStatus,signal}={}){
  const wait=1000-(Date.now()-last);if(wait>0)await new Promise(r=>setTimeout(r,wait));last=Date.now(); // 1 requête/s max côté client
  const base=s.baseUrl.replace(/\/$/,'');let r;
  if(PROVIDERS[s.provider]?.type==='gemini'){
-  const sys=messages.find(m=>m.role==='system');
+  const sys=messages.find(m=>m.role==='system'),lv={fast:'low',deep:'high'}[s.speed];
   r=await fetch(`${base}/models/${encodeURIComponent(s.model)}:streamGenerateContent?alt=sse`,{method:'POST',signal,
    headers:{'Content-Type':'application/json','x-goog-api-key':s.apiKey},
-   body:JSON.stringify({systemInstruction:sys&&{parts:[{text:sys.content}]},contents:messages.filter(m=>m.role!=='system').map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]}))})});
+   body:JSON.stringify({systemInstruction:sys&&{parts:[{text:sys.content}]},generationConfig:lv&&/gemini-3/.test(s.model)?{thinkingConfig:{thinkingLevel:lv}}:undefined,contents:messages.filter(m=>m.role!=='system').map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]}))})});
   if(!r.ok)await fail(r);
   yield*sse(r,j=>j.candidates?.[0]?.content?.parts?.filter(p=>!p.thought).map(p=>p.text||'').join(''));return}
  r=await fetch(base+'/chat/completions',{method:'POST',signal,
