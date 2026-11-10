@@ -3,6 +3,7 @@ import {settings,PERSONA_NAMES,PROVIDERS} from './settings.js';
 import {memory} from './memory.js';
 import {knowledge} from './knowledge.js';
 import {respond} from './ai-engine.js';
+import {remoteReady} from './model-manager.js';
 import {store} from './storage.js';
 const $=s=>document.querySelector(s);
 let cur=convs.all()[0]||convs.create(),ctrl=null,busyNow=false;
@@ -10,10 +11,12 @@ const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&qu
 const hl=c=>esc(c).replace(/(\/\/.*|#\s.*)|(&quot;.*?&quot;|'.*?')|\b(function|const|let|var|return|if|else|for|while|class|import|export|def|async|await|new|true|false|null)\b/g,(m,a,b)=>`<i class="${a?'c':b?'s':'k'}">${m}</i>`);
 const inline=t=>esc(t).replace(/^### (.*)$/gm,'<h4>$1</h4>').replace(/^#{1,2} (.*)$/gm,'<h3>$1</h3>').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/`([^`\n]+)`/g,'<code>$1</code>').replace(/^[-*] (.*)$/gm,'• $1').replace(/\[(.+?)\]\((https?:\/\/[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>').replace(/\n/g,'<br>');
 function md(t){const p=t.split(/```(\w*)\n?([\s\S]*?)(?:```|$)/);let o='';
- for(let i=0;i<p.length;i+=3){o+=inline(p[i]);if(i+2<p.length)o+=`<pre><code>${hl(p[i+2])}</code></pre>`}return o}
+ for(let i=0;i<p.length;i+=3){o+=inline(p[i]);if(i+2<p.length)o+=`<div class="code"><div class="ch"><span>${esc(p[i+1]||'code')}</span><button data-a="cc">Copier</button></div><pre><code>${hl(p[i+2])}</code></pre></div>`}return o}
+const SUG=[['Expliquer',"Explique-moi la relativité comme si j'avais 12 ans"],['Coder',"Écris une fonction JavaScript qui trie un tableau d'objets par date"],['Rédiger',"Rédige un e-mail poli pour demander un report de rendez-vous"],['Analyser',"Compare les avantages du télétravail et du travail au bureau"]];
+const hero=s=>`<div class="hero"><i class="orb"></i><h1>Comment puis-je vous aider ?</h1>${s.mode!=='local'&&!remoteReady(s)?`<div class="setup"><p>Collez votre clé API Google pour connecter l'IA. Elle reste uniquement dans ce navigateur.</p><div><input id="k0" type="password" placeholder="Clé API" autocomplete="off"><button id="k1">Connecter</button></div></div>`:`<div class="sug">${SUG.map(([t,p])=>`<button data-p="${esc(p)}"><b>${t}</b><span>${esc(p)}</span></button>`).join('')}</div>`}</div>`;
 function render(){
- $('#title').textContent=cur.title;$('#badge').textContent=settings.get().mode;
- $('#msgs').innerHTML=cur.messages.map((m,i)=>`<div class="m ${m.role}"><div class="b">${m.role==='user'?esc(m.content).replace(/\n/g,'<br>'):m.content?md(m.content):m.error?'':'<span class="dots"></span>'}${m.error?`<p class="err">${esc(m.error)}</p>`:''}</div><div class="a"><button data-a="copy" data-i="${i}">Copier</button>${m.role==='user'?`<button data-a="edit" data-i="${i}">Modifier</button>`:i===cur.messages.length-1&&!busyNow?`<button data-a="regen" data-i="${i}">Régénérer</button>`:''}</div></div>`).join('');
+ const s=settings.get();$('#title').textContent=cur.messages.length?cur.title:'';$('#badge').textContent=s.mode==='local'?'Local':s.model;
+ $('#msgs').innerHTML=cur.messages.length?cur.messages.map((m,i)=>`<div class="m ${m.role}">${m.role==='user'?'':'<i class="av"></i>'}<div class="mc"><div class="b${busyNow&&i===cur.messages.length-1?' live':''}">${m.role==='user'?esc(m.content).replace(/\n/g,'<br>'):m.content?md(m.content):m.error?'':'<span class="dots"></span>'}${m.error?`<p class="err">${esc(m.error)}</p>`:''}</div><div class="a"><button data-a="copy" data-i="${i}">Copier</button>${m.role==='user'?`<button data-a="edit" data-i="${i}">Modifier</button>`:i===cur.messages.length-1&&!busyNow?`<button data-a="regen" data-i="${i}">Régénérer</button>`:''}</div></div></div>`).join(''):hero(s);
  $('#list').innerHTML=convs.all().map(c=>`<li class="${c.id===cur.id?'on':''}" data-id="${c.id}"><span>${esc(c.title)}</span><button data-a="ren">✎</button><button data-a="del">🗑</button></li>`).join('');
  $('#msgs').scrollTop=1e9}
 const busy=b=>{busyNow=b;$('#send').hidden=b;$('#stop').hidden=!b};
@@ -22,12 +25,16 @@ async function generate(){
  ctrl=new AbortController();busy(true);render();
  try{for await(const t of respond(cur.messages.slice(0,-1),{signal:ctrl.signal,onStatus:s=>$('#badge').textContent=s})){m.content+=t;render()}}
  catch(e){if(!ctrl.signal.aborted)m.error=e.message}
- finally{busy(false);if(!m.content&&!m.error)cur.messages.pop();try{convs.update(cur)}catch(e){alert(e.message)}$('#badge').textContent=settings.get().mode;render()}}
-$('#form').onsubmit=e=>{e.preventDefault();if(busyNow)return;const v=$('#inp').value.trim();if(!v)return;$('#inp').value='';
+ finally{busy(false);if(!m.content&&!m.error)cur.messages.pop();try{convs.update(cur)}catch(e){alert(e.message)}render()}}
+$('#form').onsubmit=e=>{e.preventDefault();if(busyNow)return;const v=$('#inp').value.trim();if(!v)return;$('#inp').value='';$('#inp').style.height='auto';
  cur.messages.push({role:'user',content:v});if(cur.messages.length===1)cur.title=v.slice(0,40);generate()};
 $('#inp').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('#form').requestSubmit()}};
 $('#stop').onclick=()=>ctrl?.abort();
-$('#msgs').onclick=e=>{const b=e.target.closest('button');if(!b)return;const i=+b.dataset.i,m=cur.messages[i];
+$('#msgs').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.p){$('#inp').value=b.dataset.p;$('#form').requestSubmit();return}
+ if(b.id==='k1'){const k=$('#k0').value.trim();if(k){settings.set({apiKey:k});render()}return}
+ if(b.dataset.a==='cc'){navigator.clipboard.writeText(b.closest('.code').querySelector('code').innerText);b.textContent='Copié';return}
+ const i=+b.dataset.i,m=cur.messages[i];
  if(b.dataset.a==='copy')navigator.clipboard.writeText(m.content);
  if(b.dataset.a==='regen'){cur.messages.pop();generate()}
  if(b.dataset.a==='edit'){const t=prompt('Modifier le message',m.content);if(t?.trim()){cur.messages.length=i;cur.messages.push({role:'user',content:t.trim()});generate()}}};
@@ -44,7 +51,7 @@ const sel=(id,l,o,v)=>`<label>${l}<select id="${id}">${o.map(([k,n])=>`<option v
 const fld=(id,l,v,t='text')=>`<label>${l}<input id="${id}" type="${t}" value="${esc(v)}"></label>`;
 $('#setBtn').onclick=()=>{const s=settings.get();
  dlg.innerHTML=`<h3>Réglages</h3>${sel('s_mode','Mode',[['local','Local (WebGPU)'],['remote','Connecté (API)'],['hybrid','Hybride']],s.mode)}
- ${sel('s_prov','Fournisseur',Object.keys(PROVIDERS).map(k=>[k,k]),s.provider)}${fld('s_url','URL de l\'API (compatible OpenAI)',s.baseUrl)}
+ ${sel('s_prov','Fournisseur',Object.keys(PROVIDERS).map(k=>[k,PROVIDERS[k].label]),s.provider)}${fld('s_url','URL de l\'API (compatible OpenAI)',s.baseUrl)}
  ${fld('s_key','Clé API',s.apiKey,'password')}<p class="warn">La clé est stockée dans ce navigateur et reste visible du code client. Pour une clé secrète, passez par un proxy.</p>
  ${fld('s_model','Modèle distant',s.model)}${fld('s_local','Modèle local (WebLLM)',s.localModel)}
  ${sel('s_pers','Personnalité',Object.entries(PERSONA_NAMES),s.persona)}
@@ -66,3 +73,4 @@ function memDlg(){
  $('#kf').onchange=async e=>{const f=e.target.files[0];if(f){try{knowledge.add(f.name,await f.text())}catch(x){alert(x.message)}memDlg()}}}
 $('#memBtn').onclick=memDlg;
 render();
+$('#inp').oninput=e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,160)+'px'};

@@ -28,3 +28,6 @@ Ouvrez `tests.html` via un serveur local : chaque ligne affiche OK ou ECHEC.
 
 ## Fichiers
 `app.js` (interface), `ai-engine.js` (orchestration), `reasoning.js` (intentions), `model-manager.js` (local/API), `memory.js`, `knowledge.js`, `tools.js`, `conversation.js`, `settings.js`, `storage.js`.
+
+## Connexion à Google Gemini (par défaut)
+Au premier lancement, collez votre clé API (AI Studio ou Vertex AI express) dans la carte « Connecter » : elle est conservée dans le `localStorage` de votre navigateur uniquement. Modèle par défaut : `gemini-3.8-flash` (modifiable dans Réglages ; les identifiants de modèles Google changent régulièrement). Si la clé est refusée (401/403) avec « Google Gemini », essayez « Google Vertex AI (express) ». Ne commitez jamais la clé dans le dépôt ; dans la console Google, limitez-la à votre domaine `*.github.io`.
