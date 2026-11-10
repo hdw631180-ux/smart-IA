@@ -50,3 +50,7 @@ dialog button{margin-top:6px}#s_ok{background:var(--grad);border:0;color:#fff;fo
 .tw{overflow:auto;margin:.8em 0;border:1px solid var(--line);border-radius:12px}table{border-collapse:collapse;width:100%;font-size:14px}th,td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--line)}th{background:var(--s1)}tr:last-child td{border-bottom:0}
 .src{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.src span{font-size:12px;padding:3px 10px;border-radius:99px;background:var(--s2);border:1px solid var(--line);color:var(--mu)}.src span::before{content:"◈ ";color:var(--a1)}
 #speed{font-size:12px;padding:4px 10px;border-radius:99px;background:var(--s2);color:var(--tx)}
+
+.ver{font:600 11px Inter,sans-serif;padding:2px 8px;border-radius:99px;background:var(--grad);color:#fff}
+.steps{margin:0 0 10px;border:1px solid var(--line);border-radius:12px;background:var(--s1);font-size:13px;color:var(--mu)}.steps summary{cursor:pointer;padding:7px 12px}
+.steps div{padding:6px 12px;border-top:1px solid var(--line);overflow-wrap:anywhere}.steps b{color:var(--a1)}

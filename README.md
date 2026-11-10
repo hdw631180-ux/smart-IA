@@ -37,3 +37,6 @@ Au premier lancement, collez votre clé API (AI Studio ou Vertex AI express) dan
 
 ## Mode gratuit sans clé (par défaut)
 Aucune configuration : le fournisseur « Gratuit, sans clé » appelle le service public Pollinations (modèle `openai-fast`). Limites : service tiers non garanti (débit, disponibilité, conditions), messages envoyés à ce service, qualité moyenne. En cas d'échec, bascule automatique sur le modèle local si WebGPU est disponible. Pour la qualité et la confidentialité, passez sur Gemini avec votre clé dans Réglages. Aucune clé n'est jamais envoyée au service gratuit.
+
+## SMART 1.1 (agent)
+`agent.js` : boucle outil → résultat → réponse (4 étapes max) par protocole texte `<outil>{"nom":…,"args":…}</outil>`, compatible avec tous les fournisseurs. Outils : calculer, connaissances, memoire, date_heure, analyser_texte, recherche_web (service configuré), ajouter_note (sur demande). Désactivable dans Réglages ; inactif en mode local.

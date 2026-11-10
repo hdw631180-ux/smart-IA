@@ -25,7 +25,8 @@ function md(t){const p=t.split(/```(\w*)\n?([\s\S]*?)(?:```|$)/);let o='';
  for(let i=0;i<p.length;i+=3){o+=blocks(p[i]);if(i+2<p.length)o+=`<div class="code"><div class="ch"><span>${esc(p[i+1]||'code')}</span><button data-a="cc">Copier</button></div><pre><code>${hl(p[i+2])}</code></pre></div>`}return o}
 const SUG=[['Expliquer',"Explique-moi la relativité comme si j'avais 12 ans"],['Coder',"Écris une fonction JavaScript qui trie un tableau d'objets par date"],['Rédiger',"Rédige un e-mail poli pour demander un report de rendez-vous"],['Analyser',"Compare les avantages du télétravail et du travail au bureau"]];
 const hero=s=>`<div class="hero"><i class="orb"></i><h1>Comment puis-je vous aider ?</h1>${s.mode!=='local'&&!remoteReady(s)?`<div class="setup"><p>Collez votre clé API Google pour connecter l'IA. Elle reste uniquement dans ce navigateur.</p><div><input id="k0" type="password" placeholder="Clé API" autocomplete="off"><button id="k1">Connecter</button></div></div>`:`<div class="sug">${SUG.map(([t,p])=>`<button data-p="${esc(p)}"><b>${t}</b><span>${esc(p)}</span></button>`).join('')}</div>`}</div>`;
-const bodyHtml=m=>(m.role==='user'?esc(m.content).replace(/\n/g,'<br>'):m.content?md(m.content):m.error?'':'<span class="dots"></span>')+(m.error?`<p class="err">${esc(m.error)}</p>`:'');
+const stepsHtml=m=>m.steps?.length?`<details class="steps"><summary>${m.steps.length} action${m.steps.length>1?'s':''} de l'agent</summary>${m.steps.map(x=>`<div><b>${esc(x.tool)}</b> <code>${esc(x.args)}</code><br>${esc(x.result)}</div>`).join('')}</details>`:'';
+const bodyHtml=m=>stepsHtml(m)+(m.role==='user'?esc(m.content).replace(/\n/g,'<br>'):m.content?md(m.content):m.error?'':'<span class="dots"></span>')+(m.error?`<p class="err">${esc(m.error)}</p>`:'');
 let raf=0;
 const sched=()=>raf||(raf=requestAnimationFrame(()=>{raf=0;const b=$('#msgs .m:last-child .b');if(!b)return render();const el=$('#msgs'),near=el.scrollHeight-el.scrollTop-el.clientHeight<140;b.innerHTML=bodyHtml(cur.messages.at(-1));if(near)el.scrollTop=el.scrollHeight}));
 function render(){
@@ -37,7 +38,7 @@ const busy=b=>{busyNow=b;$('#send').hidden=b;$('#stop').hidden=!b};
 async function generate(){
  cur.messages.push({role:'assistant',content:''});const m=cur.messages.at(-1);
  ctrl=new AbortController();busy(true);render();
- try{for await(const t of respond(cur.messages.slice(0,-1),{signal:ctrl.signal,onStatus:s=>$('#badge').textContent=s,onSources:s=>{m.sources=s}})){m.content+=t;sched()}}
+ try{for await(const t of respond(cur.messages.slice(0,-1),{signal:ctrl.signal,onStatus:s=>$('#badge').textContent=s,onSources:s=>{m.sources=[...new Set([...(m.sources||[]),...s])]},onStep:s=>{(m.steps||=[]).push(s);sched()}})){m.content+=t;sched()}}
  catch(e){if(!ctrl.signal.aborted)m.error=e.message}
  finally{busy(false);if(!m.content&&!m.error)cur.messages.pop();try{convs.update(cur)}catch(e){alert(e.message)}render()}}
 $('#form').onsubmit=e=>{e.preventDefault();if(busyNow)return;const v=$('#inp').value.trim();if(!v)return;$('#inp').value='';$('#inp').style.height='auto';
@@ -68,12 +69,13 @@ $('#setBtn').onclick=()=>{const s=settings.get();
  ${sel('s_prov','Fournisseur',Object.keys(PROVIDERS).map(k=>[k,PROVIDERS[k].label]),s.provider)}${fld('s_url','URL de l\'API (compatible OpenAI)',s.baseUrl)}
  ${fld('s_key','Clé API',s.apiKey,'password')}<p class="warn">La clé est stockée dans ce navigateur et reste visible du code client. Pour une clé secrète, passez par un proxy.</p>
  ${fld('s_model','Modèle distant',s.model)}${fld('s_local','Modèle local (WebLLM)',s.localModel)}
+ ${sel('s_agent','Mode agent (outils automatiques)',[['1','Activé'],['0','Désactivé']],s.agent?'1':'0')}
  ${sel('s_pers','Personnalité',Object.entries(PERSONA_NAMES),s.persona)}
  <label>Instructions personnalisées<textarea id="s_cust" rows="3">${esc(s.custom)}</textarea></label>${fld('s_search','Service de recherche (URL avec {q}, renvoie du JSON)',s.searchUrl)}
  <button id="s_ok">Enregistrer</button> <button id="s_cl">Annuler</button>`;open();
  $('#s_prov').onchange=e=>{const p=PROVIDERS[e.target.value];$('#s_url').value=p.url;$('#s_model').value=p.model};
  $('#s_cl').onclick=()=>dlg.close();
- $('#s_ok').onclick=()=>{settings.set({mode:$('#s_mode').value,provider:$('#s_prov').value,baseUrl:$('#s_url').value.trim(),apiKey:$('#s_key').value.trim(),model:$('#s_model').value.trim(),localModel:$('#s_local').value.trim(),persona:$('#s_pers').value,custom:$('#s_cust').value,searchUrl:$('#s_search').value.trim()});dlg.close();render()}};
+ $('#s_ok').onclick=()=>{settings.set({mode:$('#s_mode').value,provider:$('#s_prov').value,baseUrl:$('#s_url').value.trim(),apiKey:$('#s_key').value.trim(),model:$('#s_model').value.trim(),localModel:$('#s_local').value.trim(),persona:$('#s_pers').value,agent:$('#s_agent').value==='1',custom:$('#s_cust').value,searchUrl:$('#s_search').value.trim()});dlg.close();render()}};
 function memDlg(){
  dlg.innerHTML=`<h3>Mémoire</h3><ul class="ml">${memory.list().map(e=>`<li>${esc(e.text)}<button data-m="${e.id}">✕</button></li>`).join('')||'<li>Aucun souvenir. Écrivez « retiens que… » dans le chat.</li>'}</ul>
  <input id="mnew" placeholder="Ajouter un souvenir"><button id="madd">Ajouter</button>
