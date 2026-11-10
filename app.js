@@ -29,7 +29,7 @@ const bodyHtml=m=>(m.role==='user'?esc(m.content).replace(/\n/g,'<br>'):m.conten
 let raf=0;
 const sched=()=>raf||(raf=requestAnimationFrame(()=>{raf=0;const b=$('#msgs .m:last-child .b');if(!b)return render();const el=$('#msgs'),near=el.scrollHeight-el.scrollTop-el.clientHeight<140;b.innerHTML=bodyHtml(cur.messages.at(-1));if(near)el.scrollTop=el.scrollHeight}));
 function render(){
- const s=settings.get();$('#title').textContent=cur.messages.length?cur.title:'';$('#badge').textContent=s.mode==='local'?'Local':s.model;$('#speed').value=s.speed;
+ const s=settings.get();$('#title').textContent=cur.messages.length?cur.title:'';$('#badge').textContent=s.mode==='local'?'Local':PROVIDERS[s.provider]?.keyless?'Gratuit':s.model;$('#speed').value=s.speed;
  $('#msgs').innerHTML=cur.messages.length?cur.messages.map((m,i)=>`<div class="m ${m.role}">${m.role==='user'?'':'<i class="av"></i>'}<div class="mc"><div class="b${busyNow&&i===cur.messages.length-1?' live':''}">${bodyHtml(m)}</div>${m.sources?.length?`<div class="src">${m.sources.map(x=>`<span>${esc(x)}</span>`).join('')}</div>`:''}<div class="a"><button data-a="copy" data-i="${i}">Copier</button>${m.role==='user'?`<button data-a="edit" data-i="${i}">Modifier</button>`:i===cur.messages.length-1&&!busyNow?`<button data-a="regen" data-i="${i}">Régénérer</button>`:''}</div></div></div>`).join(''):hero(s);
  $('#list').innerHTML=convs.all().map(c=>`<li class="${c.id===cur.id?'on':''}" data-id="${c.id}"><span>${esc(c.title)}</span><button data-a="ren">✎</button><button data-a="del">🗑</button></li>`).join('');
  $('#msgs').scrollTop=1e9}

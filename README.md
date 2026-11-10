@@ -34,3 +34,6 @@ Au premier lancement, collez votre clé API (AI Studio ou Vertex AI express) dan
 
 ## Base de connaissances et vitesse
 `base.json` (liste de `{name,text}`) est la base intégrée : remplacez-la par vos propres contenus. Les documents importés dans Mémoire s'y ajoutent. La recherche BM25 injecte les extraits pertinents et affiche leurs sources. Le sélecteur « Rapide / Équilibré / Approfondi » règle `thinkingLevel` des modèles Gemini 3 (Rapide = `low`).
+
+## Mode gratuit sans clé (par défaut)
+Aucune configuration : le fournisseur « Gratuit, sans clé » appelle le service public Pollinations (modèle `openai-fast`). Limites : service tiers non garanti (débit, disponibilité, conditions), messages envoyés à ce service, qualité moyenne. En cas d'échec, bascule automatique sur le modèle local si WebGPU est disponible. Pour la qualité et la confidentialité, passez sur Gemini avec votre clé dans Réglages. Aucune clé n'est jamais envoyée au service gratuit.

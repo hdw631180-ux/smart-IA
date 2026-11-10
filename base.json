@@ -4,6 +4,10 @@
   "text": "SMART AI est un assistant IA qui tourne entièrement dans le navigateur et se publie sur GitHub Pages (site statique, sans serveur). Il propose trois modes : local (modèle WebLLM sur WebGPU, sans clé), connecté (API Google Gemini ou compatible OpenAI avec votre clé) et hybride (local pour le simple, API pour le complexe). Il offre une mémoire, une base de connaissances, des outils, plusieurs personnalités et l'historique des conversations."
  },
  {
+  "name": "Mode gratuit sans clé",
+  "text": "Par défaut, SMART AI fonctionne sans clé API grâce à un service public gratuit (Pollinations, modèle openai-fast). Vos messages sont envoyés à ce service tiers pour générer la réponse : n'y saisissez rien de confidentiel. Sa qualité, son débit et sa disponibilité ne sont pas garantis, et il peut imposer des limites ou changer ses conditions. Si le service est indisponible et que le navigateur supporte WebGPU, SMART AI bascule automatiquement sur le modèle local. Pour de meilleures réponses, choisissez le fournisseur Google Gemini dans Réglages et ajoutez votre propre clé."
+ },
+ {
   "name": "Commandes et outils",
   "text": "Écrivez « retiens que… » pour enregistrer un souvenir et « oublie… » pour le supprimer. « note : … » enregistre une note. Une expression comme 12*(3+4), 2^10 ou sqrt(144) est calculée localement par une calculatrice sécurisée, sans appel au modèle. « Cherche sur internet … » ne fonctionne que si un service de recherche JSON est configuré dans Réglages (URL contenant {q}); sinon une erreur explicite est affichée, rien n'est simulé."
  },
