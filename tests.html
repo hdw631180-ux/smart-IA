@@ -1,0 +1,9 @@
+<!doctype html><meta charset="utf-8"><title>Tests SMART AI</title><body style="background:#111;color:#eee;font:16px monospace"><pre id="o"></pre>
+<script type="module">
+import {calc} from './tools.js';import {analyze} from './reasoning.js';import {memory} from './memory.js';
+const t=[['calcul priorité',()=>calc('2+3*4')===14],['calcul parenthèses',()=>calc('(2+3)*4')===20],['puissance',()=>calc('2^3^2')===512],['moins unaire',()=>calc('-2^2')===-4],
+['calcul refuse du code',()=>{try{calc('alert(1)');return false}catch{return true}}],['division par zéro',()=>{try{calc('1/0');return false}catch{return true}}],
+['intention calcul',()=>analyze('12*3').intent==='calc'],['intention mémoire',()=>analyze("retiens que j'aime le thé").intent==='memory.save'],['phrase normale = chat',()=>analyze('Explique la photosynthèse').intent==='chat'],
+['mémoire refuse le sensible',()=>!!memory.add('mon mot de passe est 1234').error]];
+document.getElementById('o').textContent=t.map(([n,f])=>{let ok=false;try{ok=f()}catch{}return(ok?'OK   ':'ECHEC ')+n}).join('\n');
+</script>

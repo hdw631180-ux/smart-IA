@@ -1,0 +1,7 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SMART AI</title><link rel="stylesheet" href="style.css"></head><body>
+<aside id="side"><button id="new">Nouvelle conversation</button><ul id="list"></ul>
+<div class="foot"><button id="memBtn">Mémoire</button><button id="setBtn">Réglages</button><button id="exp">Exporter</button><label class="btn">Importer<input id="imp" type="file" accept=".json" hidden></label></div></aside>
+<main><header><button id="menu">☰</button><span id="title"></span><span id="badge"></span></header>
+<div id="msgs"></div>
+<form id="form"><textarea id="inp" rows="1" placeholder="Posez une question, ou écrivez « retiens que… », « 12*(3+4) »…"></textarea><button id="send">Envoyer</button><button id="stop" type="button" hidden>Interrompre</button></form></main>
+<dialog id="dlg"></dialog><script type="module" src="app.js"></script></body></html>
